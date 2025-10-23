@@ -1,16 +1,34 @@
-# React + Vite
+# 🌏 VNR Globe Tour – Trang học lịch sử Việt Nam tương tác
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> “Globe 3D + Rồng dẫn chuyện + Modal từng cột mốc” — mượt, gọn, dễ mở rộng.  
+> Stack: **React**, **Vite**, **globe.gl (three.js)**, **CSS Modules**, **lucide-react**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Project Setup & Usage
 
-## React Compiler
+### 1️⃣ Cài đặt và chạy dự án (local)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Bước 1.** Clone repo về máy:
+```bash
+git clone https://github.com/<your-username>/VNR-GlobeTour.git
+cd VNR-GlobeTour
+npm install
+npm run dev
+# 🌏 VNR Globe Tour – Trang học lịch sử Việt Nam tương tác
 
-## Expanding the ESLint configuration
+> “Globe 3D + Rồng dẫn chuyện + Modal từng cột mốc” — mượt, gọn, dễ mở rộng.  
+> Stack: **React**, **Vite**, **globe.gl (three.js)**, **CSS Modules**, **lucide-react**.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🚀 Project Setup & Usage
+
+### 1️⃣ Cài đặt và chạy dự án (local)
+
+**Bước 1.** Clone repo về máy:
+```bash
+git clone https://github.com/<your-username>/VNR-GlobeTour.git
+cd VNR-GlobeTour
+npm install
+npm run dev
