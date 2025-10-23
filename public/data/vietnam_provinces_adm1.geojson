@@ -1,0 +1,26 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "NAME_1": "Hà Nội", "code": "HN" },
+      "geometry": { "type": "Point", "coordinates": [105.8542, 21.0285] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NAME_1": "Sample Province", "code": "SP" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [105.7, 21.1],
+            [105.9, 21.1],
+            [105.9, 20.95],
+            [105.7, 20.95],
+            [105.7, 21.1]
+          ]
+        ]
+      }
+    }
+  ]
+}

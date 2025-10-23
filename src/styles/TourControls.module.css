@@ -1,0 +1,118 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 12, 24, 0.6),
+    rgba(8, 20, 36, 0.6)
+  );
+  border-radius: 12px;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(6px);
+  max-width: 840px;
+  margin: 18px;
+}
+
+/* left control buttons */
+.left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.playBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  color: #07102a;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+}
+.playBtn span {
+  font-size: 13px;
+}
+
+/* center progress */
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressBar {
+  position: relative;
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  overflow: hidden;
+}
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  width: 0%;
+  transition: width 260ms ease;
+}
+
+.stepLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #f8fafc;
+}
+.stepLabel strong {
+  font-size: 14px;
+}
+.stepInfo {
+  opacity: 0.7;
+  font-size: 13px;
+  margin-left: 10px;
+}
+
+/* right thumbnails */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thumbs {
+  display: flex;
+  gap: 8px;
+}
+.thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+.activeThumb {
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  color: #07102a;
+  font-weight: 800;
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(255, 140, 60, 0.12);
+}

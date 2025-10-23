@@ -1,0 +1,155 @@
+/* src/components/Map.module.css */
+
+/* container layout */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .container {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+.mapWrap {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+}
+
+.map {
+  width: 100%;
+  height: 600px;
+}
+
+/* right column controls */
+.controls {
+  padding: 8px;
+}
+.legend {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.04);
+}
+.legendRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.legendSwatch {
+  width: 18px;
+  height: 12px;
+  background: #e11d48;
+  border-radius: 4px;
+  display: inline-block;
+}
+.pulseLegend {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+}
+
+/* tooltip overlay */
+.tooltip {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 9999;
+}
+.tooltipCard {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.08);
+  border: 1px solid rgba(2, 6, 23, 0.04);
+}
+.tooltipTitle {
+  font-weight: 700;
+  font-size: 13px;
+  color: #0f172a;
+}
+.tooltipMeta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* =========== Global rules for Leaflet-generated SVG / DIV (use :global to not scope names) =========== */
+:global(.pulsing-icon) {
+  background: transparent !important;
+  border: 0;
+  width: 30px;
+  height: 30px;
+  display: block;
+  position: relative;
+}
+:global(.pulse-ring) {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.06);
+  animation: ringPulse 1.8s infinite ease-out;
+}
+:global(.pulse-core) {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+}
+
+/* pulse animation */
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  60% {
+    transform: scale(1.6);
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* province path styling (SVG <path>) */
+:global(.province-path) {
+  transition: all 180ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+/* timeline stroke animation (dash offset) */
+:global(.timeline-path) path {
+  stroke-dasharray: 8 6;
+  stroke-linecap: round;
+  animation: dashMove 2s linear infinite;
+  stroke: #f59e0b !important; /* yellow/orange */
+}
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -20;
+  }
+}

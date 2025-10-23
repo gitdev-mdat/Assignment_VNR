@@ -1,0 +1,216 @@
+/* Earth.module.css
+   Toàn bộ style cho Earth + marker (pulse mờ, không đặc)
+   Paste đè lên file hiện tại.
+*/
+
+/* ---------------- layout ---------------- */
+.earthContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #000010, #000015 80%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.globeCanvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* modal layer (EventModal trên globe) */
+.modalLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 50; /* above globe canvas */
+  pointer-events: none; /* modal children enable their own pointer-events */
+}
+.modalVisible {
+  pointer-events: auto;
+}
+
+/* ------------------ Marker styles (single, clean set) ------------------ */
+
+/* wrapper - vị trí + hover target */
+.markerWrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transform-origin: center;
+  pointer-events: auto;
+  /* nhẹ animation khi wrapper di chuyển (nếu cần) */
+  transition: transform 260ms ease;
+}
+
+/* main visible marker box - small dot base */
+.marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: scale(0.6);
+  opacity: 0;
+  transition: transform 360ms ease, opacity 360ms ease;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 8px 22px rgba(11, 20, 30, 0.28));
+}
+
+/* Dot ở giữa (chính) */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #ff5a3c;
+  box-shadow: 0 6px 14px rgba(255, 80, 80, 0.28);
+  transform-origin: center;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+/* pulse: vẫn tồn tại nhưng rất mờ / subtle (không "đặc") */
+.pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  transform: translate(-50%, -50%) scale(0.95);
+  border-radius: 999px;
+  /* subtle radial gradient (mờ) */
+  background: radial-gradient(
+    circle,
+    rgba(255, 120, 120, 0.12) 0%,
+    rgba(255, 120, 120, 0.06) 40%,
+    rgba(255, 120, 120, 0) 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 420ms cubic-bezier(0.2, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+/* label (nhỏ gọn) */
+.markerLabel {
+  margin-top: 8px;
+  background: rgba(11, 20, 30, 0.92);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+  box-shadow: 0 8px 26px rgba(2, 6, 23, 0.45);
+}
+
+/* khi marker xuất (JS sẽ thêm .show) */
+.marker.show {
+  transform: scale(1);
+  opacity: 1;
+}
+.marker.show .pulse {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  /* animation chỉ chạy 1 lần để tạo ripple nhẹ */
+  animation: pulseOnce 1000ms ease-out 1;
+}
+
+/* hover interactions */
+.markerWrapper:hover .dot {
+  transform: scale(1.22);
+  box-shadow: 0 14px 34px rgba(255, 80, 80, 0.34);
+}
+.markerWrapper:hover .pulse {
+  opacity: 1;
+  animation: pulseScale 1400ms ease-out infinite;
+}
+.markerWrapper:hover .markerLabel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* gentle spawn animation fallback (if you want) */
+@keyframes spawnScale {
+  0% {
+    transform: scale(0.28);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* pulse animations (subtle) */
+@keyframes pulseOnce {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.7);
+    opacity: 0.12;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseScale {
+  0% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0.22;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* accessibility / responsive tweaks (tiny) */
+@media (max-width: 640px) {
+  .markerLabel {
+    display: none; /* hide labels on tiny screens */
+  }
+  .marker {
+    width: 14px;
+    height: 14px;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+  }
+}
+/* thêm: class dùng để hiển thị tooltip programmatically */
+.markerLabel {
+  /* giữ như đang có */
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+/* class hiển thị (JS sẽ add) */
+.markerLabel.show,
+.markerLabelVisible {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: none;
+}
