@@ -1,0 +1,583 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { X, Play, Image, Video } from "lucide-react";
+import styles from "../styles/EventModal.module.css";
+
+/**
+ * EventModal
+ *
+ * Props:
+ * - show (bool)
+ * - onClose ()
+ * - events (array)
+ * - startIndex (number)
+ * - onIndexChange
+ * - onRequestGuide (string|array)
+ * - onRequestStageAdvance ()
+ * - onRequestStageBack ()
+ * - bottomOffset
+ */
+
+export default function EventModal({
+  show = false,
+  onClose,
+  events = [],
+  startIndex = 0,
+  onIndexChange,
+  onRequestGuide,
+  onRequestStageAdvance,
+  onRequestStageBack,
+  bottomOffset = 20,
+}) {
+  const listRef = useRef(null);
+  const sheetRef = useRef(null);
+
+  const [idx, setIdx] = useState(startIndex || 0);
+  const [panelTab, setPanelTab] = useState("evidence");
+  const [previewMedia, setPreviewMedia] = useState(null);
+  const suppressObserverRef = useRef(false);
+  const suppressTimeoutRef = useRef(null);
+
+  useEffect(() => setIdx(startIndex || 0), [startIndex]);
+
+  useEffect(() => {
+    if (!show || !listRef.current) return;
+    const node = listRef.current.children[idx];
+    if (node && listRef.current) {
+      const top =
+        node.offsetTop -
+        listRef.current.clientHeight / 2 +
+        node.clientHeight / 2;
+      listRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+    onIndexChange?.(idx);
+    setPanelTab("evidence");
+  }, [idx, show, onIndexChange]);
+
+  useEffect(() => {
+    if (!show || !listRef.current) return;
+    const container = listRef.current;
+    const items = Array.from(container.children || []);
+    if (!items.length) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (suppressObserverRef.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        const i = items.indexOf(visible.target);
+        if (i !== -1 && i !== idx) {
+          setIdx(i);
+          onIndexChange?.(i);
+        }
+      },
+      { root: container, threshold: [0.4, 0.6, 0.8] }
+    );
+    items.forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      if (suppressTimeoutRef.current) {
+        clearTimeout(suppressTimeoutRef.current);
+        suppressTimeoutRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, events, onIndexChange]);
+
+  const notifyUserInteraction = (ms = 300) => {
+    suppressObserverRef.current = true;
+    if (suppressTimeoutRef.current) clearTimeout(suppressTimeoutRef.current);
+    suppressTimeoutRef.current = setTimeout(() => {
+      suppressObserverRef.current = false;
+      suppressTimeoutRef.current = null;
+    }, ms);
+  };
+
+  const items = useMemo(
+    () =>
+      events.map((ev, i) => ({
+        i,
+        id: ev?.id ?? `step-${i}`,
+        year: ev?.year ?? "",
+        title: ev?.title ?? "Sự kiện",
+        description: ev?.description ?? "",
+        detail: ev?.detail ?? ev?.content ?? "",
+        pageNote: ev?.pageNote ?? ev?.note ?? "",
+        place: ev?.place || "Việt Nam",
+        images: Array.isArray(ev?.images)
+          ? ev.images
+          : ev?.image
+          ? [ev.image]
+          : [],
+        videos: Array.isArray(ev?.videos)
+          ? ev.videos
+          : ev?.video
+          ? [ev.video]
+          : [],
+        narrationParts: ev?.narrationParts,
+        narration: ev?.narration ?? "",
+        sourceLinks: ev?.sources ?? ev?.links ?? [],
+      })),
+    [events]
+  );
+
+  const active = items[idx] || null;
+
+  if (!show) return null;
+
+  return createPortal(
+    <>
+      <div
+        className={styles.backdrop}
+        onClick={onClose}
+        aria-hidden="true"
+        data-testid="eventmodal-backdrop"
+        style={{ zIndex: 1000, pointerEvents: "auto" }}
+      />
+
+      <section
+        ref={sheetRef}
+        role="dialog"
+        tabIndex={-1}
+        aria-modal="true"
+        aria-label="Timeline Đổi mới"
+        onClick={(e) => e.stopPropagation()}
+        className={`${styles.sheet} ${styles.sheetRight}`}
+        style={{
+          bottom: bottomOffset,
+          "--sheet-w": "min(1400px, 98vw)",
+          "--sheet-h": "clamp(520px, 72vh, 880px)",
+          "--sheet-pad-top": "64px",
+          justifyContent: "flex-end",
+          zIndex: 1010,
+        }}
+      >
+        {/* HEADER */}
+        <header className={styles.header}>
+          <div className={styles.headerLeft}>
+            <h3 className={styles.title}>Timeline Đổi mới</h3>
+            <span className={styles.sub}>
+              kéo để duyệt mốc — dùng ← / → để điều hướng
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              className={styles.guideBtn}
+              title="Rồng dẫn truyện mốc này"
+              onClick={() => {
+                notifyUserInteraction();
+                onRequestGuide?.(active?.description);
+              }}
+              aria-label="Dẫn truyện mốc này"
+            >
+              <Play size={14} /> Dẫn mốc
+            </button>
+
+            {/* <-- Back stage button (new) */}
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              title="Giai đoạn trước"
+              onClick={() => {
+                notifyUserInteraction();
+                onRequestStageBack?.();
+              }}
+              aria-label="Giai đoạn trước"
+              style={{ marginRight: 8 }}
+            >
+              ← Giai đoạn trước
+            </button>
+
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              title="Giai đoạn tiếp"
+              onClick={() => {
+                notifyUserInteraction();
+                onRequestStageAdvance?.();
+              }}
+              aria-label="Giai đoạn tiếp"
+            >
+              <Play size={14} /> Giai đoạn tiếp →
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng"
+              title="Đóng"
+              className={styles.closeBtn}
+            >
+              <X size={16} />
+              <span className={styles.closeText}>Đóng</span>
+            </button>
+          </div>
+        </header>
+
+        <div className={styles.progressWrap} aria-hidden>
+          <div
+            className={styles.progressBar}
+            style={{
+              width: `${((idx + 1) / Math.max(1, items.length)) * 100}%`,
+            }}
+          />
+        </div>
+
+        <div
+          className={styles.sheetInner}
+          style={{ display: "flex", gap: 12, height: "100%" }}
+        >
+          {/* LEFT LIST */}
+          <div
+            className={styles.list}
+            ref={listRef}
+            aria-label="Danh sách mốc"
+            style={{ width: "42%", overflowY: "auto", paddingRight: 8 }}
+            onPointerDown={() => notifyUserInteraction(350)}
+          >
+            {items.map((it) => {
+              const activeClass = it.i === idx ? styles.active : "";
+              return (
+                <article
+                  key={it.id}
+                  className={`${styles.item} ${activeClass}`}
+                  onClick={() => {
+                    notifyUserInteraction();
+                    setIdx(it.i);
+                    onIndexChange?.(it.i);
+                    setPanelTab("evidence");
+                  }}
+                >
+                  <div className={styles.thumb}>
+                    {it.images && it.images.length ? (
+                      <img
+                        src={it.images[0]}
+                        alt={it.title}
+                        draggable={false}
+                        className={styles.thumbImg}
+                      />
+                    ) : (
+                      <div className={styles.thumbFallback} aria-hidden>
+                        <Image size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.content}>
+                    <div className={styles.meta}>
+                      <span
+                        className={`${styles.year} ${
+                          it.i === idx ? styles.yearActive : ""
+                        }`}
+                      >
+                        {it.year || "Năm ..."}
+                      </span>
+                      <span className={styles.dot} />
+                      <span className={styles.place}>{it.place}</span>
+                    </div>
+                    <h4 className={styles.itemTitle}>{it.title}</h4>
+                    <p className={styles.desc}>
+                      {it.description || "Không có mô tả."}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          {/* RIGHT PANEL */}
+          <aside
+            className={styles.detailPanel}
+            aria-live="polite"
+            style={{ width: "58%", padding: "18px 20px", overflowY: "auto" }}
+          >
+            {active ? (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ color: "#94a3b8", fontSize: 13 }}>
+                      <strong>{active.year}</strong> — {active.place}
+                    </div>
+                    <h2 style={{ margin: "8px 0 12px" }}>{active.title}</h2>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#6b7280", fontSize: 13 }}>
+                      {active.pageNote}
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <button
+                        type="button"
+                        className={styles.primaryBtn}
+                        onClick={() => {
+                          notifyUserInteraction();
+                          onRequestStageAdvance?.();
+                        }}
+                      >
+                        <Play size={14} /> Giai đoạn tiếp →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* === Tabs (reordered) === */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginBottom: 12,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={`${styles.tabBtn} ${
+                      panelTab === "evidence" ? styles.tabActive : ""
+                    }`}
+                    onClick={() => setPanelTab("evidence")}
+                  >
+                    Bằng chứng ({active.images.length + active.videos.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.tabBtn} ${
+                      panelTab === "detail" ? styles.tabActive : ""
+                    }`}
+                    onClick={() => setPanelTab("detail")}
+                  >
+                    Chi tiết
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.tabBtn} ${
+                      panelTab === "desc" ? styles.tabActive : ""
+                    }`}
+                    onClick={() => setPanelTab("desc")}
+                  >
+                    Mô tả ngắn
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.tabBtn} ${
+                      panelTab === "source" ? styles.tabActive : ""
+                    }`}
+                    onClick={() => setPanelTab("source")}
+                  >
+                    Nguồn
+                  </button>
+                </div>
+
+                {/* === Tab content === */}
+                {panelTab === "evidence" && (
+                  <div>
+                    <h4>Bằng chứng</h4>
+
+                    {/* Video */}
+                    {active.videos?.length ? (
+                      <div style={{ marginTop: 20 }}>
+                        {active.videos.map((v, i) => {
+                          const url = typeof v === "string" ? v : v.url;
+                          const yt = url.match(
+                            /(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]+)/
+                          );
+                          return (
+                            <div key={i} style={{ marginBottom: 16 }}>
+                              <div className={styles.videoFrame}>
+                                {yt ? (
+                                  <iframe
+                                    src={`https://www.youtube.com/embed/${yt[1]}`}
+                                    title={`Video ${i + 1}`}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <video
+                                    src={url}
+                                    controls
+                                    style={{
+                                      position: "absolute",
+                                      inset: 0,
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ color: "#64748b", marginTop: 8 }}>
+                        Không có video.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {panelTab === "detail" && (
+                  <div>
+                    <h4>Chi tiết</h4>
+                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                      {active.detail || "Không có nội dung chi tiết."}
+                    </p>
+                  </div>
+                )}
+
+                {panelTab === "desc" && (
+                  <div>
+                    <h4>Mô tả ngắn</h4>
+                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                      {active.description || "Không có mô tả."}
+                    </p>
+                  </div>
+                )}
+
+                {panelTab === "source" && (
+                  <div>
+                    <h4>Nguồn & Ghi chú</h4>
+                    <div style={{ color: "#6b7280", whiteSpace: "pre-wrap" }}>
+                      {active.pageNote || "Không có chú thích trang."}
+                    </div>
+                    {active.sourceLinks?.length > 0 && (
+                      <ul style={{ marginTop: 12 }}>
+                        {active.sourceLinks.map((s, i) => (
+                          <li key={i}>
+                            <a href={s} target="_blank" rel="noreferrer">
+                              {s}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div>Không có mốc được chọn.</div>
+            )}
+          </aside>
+        </div>
+
+        {/* FOOTER */}
+        <div className={styles.footerBar}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className={styles.footerNav}
+                onClick={() => {
+                  notifyUserInteraction();
+                  setIdx((s) => Math.max(0, s - 1));
+                }}
+              >
+                ← Trước
+              </button>
+              <button
+                type="button"
+                className={styles.footerNav}
+                onClick={() => {
+                  notifyUserInteraction();
+                  setIdx((s) => Math.min(items.length - 1, s + 1));
+                }}
+              >
+                Tiếp →
+              </button>
+            </div>
+
+            <div style={{ color: "#94a3b8" }}>
+              {idx + 1} / {items.length}
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              {/* <-- Back stage in footer too */}
+              <button
+                type="button"
+                className={styles.footerNav}
+                onClick={() => {
+                  notifyUserInteraction();
+                  onRequestStageBack?.();
+                }}
+              >
+                Giai đoạn trước ←
+              </button>
+
+              <button
+                type="button"
+                className={styles.footerNav}
+                onClick={() => onRequestStageAdvance?.()}
+              >
+                Giai đoạn tiếp →
+              </button>
+              <button
+                type="button"
+                className={styles.footerClose}
+                onClick={onClose}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PREVIEW */}
+      {previewMedia && (
+        <div
+          className={styles.previewOverlay}
+          onClick={() => setPreviewMedia(null)}
+          role="dialog"
+          aria-modal="true"
+          style={{ zIndex: 1200 }}
+        >
+          <div
+            className={styles.previewCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.previewClose}
+              onClick={() => setPreviewMedia(null)}
+            >
+              <X size={16} />
+            </button>
+            {previewMedia.type === "image" ? (
+              <img
+                src={previewMedia.src}
+                alt="preview"
+                style={{
+                  maxWidth: "min(90vw, 1200px)",
+                  maxHeight: "80vh",
+                  objectFit: "contain",
+                }}
+              />
+            ) : (
+              <video
+                src={previewMedia.src}
+                controls
+                style={{ width: "80vw", height: "60vh" }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </>,
+    document.body
+  );
+}

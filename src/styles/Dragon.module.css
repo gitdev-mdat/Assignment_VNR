@@ -1,0 +1,225 @@
+.centerOverlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    1000px 800px at 50% 60%,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.1) 60%,
+    transparent
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: overlayFade 0.6s ease both;
+
+  /* ✅ Cho phép click */
+  pointer-events: auto;
+}
+
+@keyframes overlayFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dragonWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  animation: appearCenter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes appearCenter {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* orb - to hơn */
+.dragonOrb {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    from 210deg,
+    #ffd966,
+    #ff8a4b,
+    #fb7185,
+    #a78bfa,
+    #60a5fa,
+    #34d399,
+    #ffd966
+  );
+  box-shadow: 0 20px 60px rgba(255, 138, 75, 0.4),
+    inset 0 0 80px rgba(255, 255, 255, 0.2);
+  animation: dragonFloat 3s ease-in-out infinite;
+  z-index: 1; /* ✅ dưới bong bóng */
+}
+
+.orbEmoji {
+  font-size: 80px;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.3));
+  user-select: none;
+}
+
+.orbGlow {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(255, 216, 102, 0.5),
+    transparent 70%
+  );
+  filter: blur(20px);
+}
+
+/* bubble */
+.dragonBubble {
+  pointer-events: auto;
+  min-width: 480px;
+  max-width: 90vw;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(250, 250, 250, 0.96)
+  );
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: bubbleAppear 0.6s ease both;
+  z-index: 10; /* ✅ nằm trên orb */
+}
+
+@keyframes bubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bubbleBorder {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none; /* ✅ không chặn click */
+}
+
+/* header */
+.bubbleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.bubbleTitle {
+  font-weight: 800;
+  font-size: 18px;
+}
+.bubbleClose {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.bubbleClose:hover {
+  opacity: 1;
+}
+
+/* body */
+.bubbleBody {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+.bubbleText {
+  word-break: break-word;
+}
+
+/* footer */
+.bubbleFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.counter {
+  font-size: 13px;
+  color: #64748b;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.smallBtn,
+.primaryBtn {
+  cursor: pointer;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.smallBtn {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 8px 14px;
+}
+.primaryBtn {
+  border: none;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  color: #0b1220;
+  box-shadow: 0 10px 30px rgba(255, 138, 75, 0.35);
+}
+.primaryBtn:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+@keyframes dragonFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.caret {
+  animation: caretBlink 1s steps(2, start) infinite;
+}
+@keyframes caretBlink {
+  0%,
+  49% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
