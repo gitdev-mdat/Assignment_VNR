@@ -1,4 +1,4 @@
-// src/components/EventModal.jsx  (replace your existing file)
+// src/components/EventModal.jsx  (updated)
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Play, Image as ImageIcon } from "lucide-react";
@@ -34,53 +34,129 @@ export default function EventModal({
   const sheetRef = useRef(null);
 
   const [idx, setIdx] = useState(startIndex || 0);
-  // DEFAULT to 'detail' instead of 'evidence'
   const [panelTab, setPanelTab] = useState("detail");
   const [previewMedia, setPreviewMedia] = useState(null);
+
+  // suppression + timing refs
   const suppressObserverRef = useRef(false);
   const suppressTimeoutRef = useRef(null);
 
+  // IO / rAF / bookkeeping refs
+  const rafRef = useRef(null);
+  const lastObservedRef = useRef(-1);
+  const ioRef = useRef(null);
+  const ioDebounceTimeoutRef = useRef(null);
+
   useEffect(() => setIdx(startIndex || 0), [startIndex]);
 
+  // when idx changes programmatically, scroll item into view.
+  // suppress observer to avoid feedback loop.
   useEffect(() => {
     if (!show || !listRef.current) return;
-    const node = listRef.current.children[idx];
-    if (node && listRef.current) {
-      const top =
-        node.offsetTop -
-        listRef.current.clientHeight / 2 +
-        node.clientHeight / 2;
-      listRef.current.scrollTo({ top, behavior: "smooth" });
-    }
-    onIndexChange?.(idx);
-    // open detail by default when index changes
-    setPanelTab("detail");
-  }, [idx, show, onIndexChange]);
+    const container = listRef.current;
+    const node = container.children[idx];
+    if (node) {
+      // suppress IO while programmatic scrolling
+      suppressObserverRef.current = true;
+      if (suppressTimeoutRef.current) {
+        clearTimeout(suppressTimeoutRef.current);
+        suppressTimeoutRef.current = null;
+      }
 
+      // center the item smoothly
+      // prefer scrollIntoView with block: 'center' (browser handles smooth animation)
+      node.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+
+      // re-enable observer after animation estimated time
+      suppressTimeoutRef.current = setTimeout(() => {
+        suppressObserverRef.current = false;
+        suppressTimeoutRef.current = null;
+      }, 420); // tweak if needed
+
+      onIndexChange?.(idx);
+      setPanelTab("detail");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, show]);
+
+  // IntersectionObserver to update idx while user scrolls / gestures.
   useEffect(() => {
     if (!show || !listRef.current) return;
     const container = listRef.current;
     const items = Array.from(container.children || []);
     if (!items.length) return;
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (suppressObserverRef.current) return;
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!visible) return;
-        const i = items.indexOf(visible.target);
-        if (i !== -1 && i !== idx) {
-          setIdx(i);
+    // cleanup existing observer if any
+    if (ioRef.current) {
+      ioRef.current.disconnect();
+      ioRef.current = null;
+    }
+
+    // IO callback: pick the most intersecting entry, but throttle with rAF + small debounce
+    const cb = (entries) => {
+      if (suppressObserverRef.current) return;
+      // find entry with largest intersectionRatio
+      const visible = entries
+        .filter((e) => e.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      const i = items.indexOf(visible.target);
+      if (i === -1) return;
+
+      // debounce tiny spikes
+      if (lastObservedRef.current === i) return; // same index, skip
+
+      // clear previous debounce
+      if (ioDebounceTimeoutRef.current) {
+        clearTimeout(ioDebounceTimeoutRef.current);
+        ioDebounceTimeoutRef.current = null;
+      }
+
+      // schedule update in next animation frame
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        // small guard: if user is interacting we may want to wait a bit more
+        // but most of time rAF is enough to avoid jank
+        lastObservedRef.current = i;
+        // only set state if it's different
+        setIdx((prev) => {
+          if (prev === i) return prev;
           onIndexChange?.(i);
-        }
-      },
-      { root: container, threshold: [0.4, 0.6, 0.8] }
-    );
+          return i;
+        });
+      });
+
+      // small debounce to avoid rapid flipping between neighbors
+      ioDebounceTimeoutRef.current = setTimeout(() => {
+        ioDebounceTimeoutRef.current = null;
+      }, 120); // tune: lower = more sensitive, higher = smoother
+    };
+
+    const io = new IntersectionObserver(cb, {
+      root: container,
+      threshold: [0.5], // simpler threshold — we care when 50% visible
+      rootMargin: "0px",
+    });
+    ioRef.current = io;
     items.forEach((el) => io.observe(el));
+
     return () => {
-      io.disconnect();
+      if (ioRef.current) {
+        ioRef.current.disconnect();
+        ioRef.current = null;
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      if (ioDebounceTimeoutRef.current) {
+        clearTimeout(ioDebounceTimeoutRef.current);
+        ioDebounceTimeoutRef.current = null;
+      }
       if (suppressTimeoutRef.current) {
         clearTimeout(suppressTimeoutRef.current);
         suppressTimeoutRef.current = null;
@@ -151,7 +227,7 @@ export default function EventModal({
         style={{
           bottom: bottomOffset,
           "--sheet-w": "min(1400px, 98vw)",
-          "--sheet-h": "clamp(520px, 72vh, 880px)",
+          "--sheet-h": "clamp(520px, 100vh, 1000px)",
           "--sheet-pad-top": "64px",
           justifyContent: "flex-end",
           zIndex: 1010,
@@ -238,7 +314,15 @@ export default function EventModal({
             className={styles.list}
             ref={listRef}
             aria-label="Danh sách mốc"
-            style={{ width: "42%", overflowY: "auto", paddingRight: 8 }}
+            style={{
+              width: "42%",
+              overflowY: "auto",
+              paddingRight: 8,
+              // enable scroll-snap + smooth native scrolling
+              scrollSnapType: "y proximity",
+              WebkitOverflowScrolling: "touch",
+              scrollBehavior: "smooth",
+            }}
             onPointerDown={() => notifyUserInteraction(350)}
           >
             {items.map((it) => {
@@ -251,7 +335,12 @@ export default function EventModal({
                     notifyUserInteraction();
                     setIdx(it.i);
                     onIndexChange?.(it.i);
-                    setPanelTab("detail"); // keep behaviour: list click => detail
+                    setPanelTab("detail");
+                  }}
+                  // each item participates in scroll snapping & has stable size to avoid layout shifts
+                  style={{
+                    scrollSnapAlign: "center",
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 >
                   <div className={styles.thumb}>
@@ -261,6 +350,8 @@ export default function EventModal({
                         alt={it.title}
                         draggable={false}
                         className={styles.thumbImg}
+                        // prevent image from causing layout shift (fixed aspect handled in CSS)
+                        loading="lazy"
                       />
                     ) : (
                       <div className={styles.thumbFallback} aria-hidden>
@@ -315,18 +406,7 @@ export default function EventModal({
                     <div style={{ color: "#6b7280", fontSize: 13 }}>
                       {active.pageNote}
                     </div>
-                    <div style={{ marginTop: 8 }}>
-                      <button
-                        type="button"
-                        className={styles.primaryBtn}
-                        onClick={() => {
-                          notifyUserInteraction();
-                          onRequestStageAdvance?.();
-                        }}
-                      >
-                        <Play size={14} /> Giai đoạn tiếp →
-                      </button>
-                    </div>
+                    <div style={{ marginTop: 8 }} />
                   </div>
                 </div>
 
@@ -364,7 +444,6 @@ export default function EventModal({
                   <div>
                     <h4>Bằng chứng</h4>
 
-                    {/* If there are videos -> show them */}
                     {active.videos?.length ? (
                       <div style={{ marginTop: 20 }}>
                         {active.videos.map((v, i) => {
@@ -401,7 +480,6 @@ export default function EventModal({
                         })}
                       </div>
                     ) : active.images?.length ? (
-                      // No videos -> show images as replacement (click to preview)
                       <div
                         style={{
                           marginTop: 12,
@@ -449,6 +527,7 @@ export default function EventModal({
                                   height: "100%",
                                   objectFit: "cover",
                                 }}
+                                loading="lazy"
                               />
                             </div>
                           </button>
