@@ -443,7 +443,22 @@ const QUESTIONS = [
   // --- if you want more questions from the block, append similarly ---
 ];
 
-export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
+/**
+ * QuizModal
+ * Props:
+ * - visible (bool)
+ * - onClose (func)
+ * - questions (array)
+ *
+ * This component injects a small scoped CSS when mounted so
+ * the modal looks correct in both light/dark modes and scrollbar is visible.
+ */
+/* ======= QuizModal component ======= */
+export default function QuizModal({ visible, onClose, questions }) {
+  // use provided questions when available, otherwise fallback to default bank
+  const QUIZ =
+    Array.isArray(questions) && questions.length ? questions : QUESTIONS;
+
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
@@ -458,9 +473,66 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
     }
   }, [visible]);
 
+  // inject scoped CSS for modal once (keeps darkmode + scrollbar + button styles)
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const id = "quiz-modal-styles";
+    if (document.getElementById(id)) return;
+
+    const css = `
+      /* base backdrop/card */
+      .quiz-modal-backdrop { position: fixed; inset: 0; z-index: 9999; display:flex; align-items:center; justify-content:center; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+      .qm-overlay{ position:absolute; inset:0; background: rgba(2,6,23,0.6); backdrop-filter: blur(2px); }
+      .quiz-modal-card { position: relative; width:800px; max-width:94vw; border-radius:12px; overflow:hidden; box-shadow:0 12px 40px rgba(2,6,23,0.4); background:var(--panel-bg, white); color:var(--text-on-dark,#07102a); z-index:10000; border:1px solid rgba(2,6,23,0.06); }
+      .quiz-modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid rgba(0,0,0,0.04); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); }
+      .quiz-modal-header .meta { font-size:12px; color: var(--muted, #6b7280); }
+      .quiz-modal-body{ padding:16px; }
+      .quiz-question{ margin-bottom:12px; font-weight:600; }
+      .quiz-choices{ display:flex; flex-direction:column; gap:8px; }
+
+      /* choice */
+      .quiz-choice{ text-align:left; padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:var(--surface,#fff); cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition: transform 120ms ease, box-shadow 120ms ease; }
+      .quiz-choice:active{ transform: translateY(1px); }
+      .quiz-choice.correct{ background: linear-gradient(180deg, rgba(220,252,231,1), rgba(236,253,245,1)); border:2px solid #10b981; color:#065f46; }
+      .quiz-choice.wrong{ background: linear-gradient(180deg, rgba(255,241,242,1), rgba(255,239,241,1)); border:2px solid #ef4444; color:#7f1d1d; }
+      .quiz-choice.dim{ opacity:0.96; }
+
+      /* buttons */
+      .quiz-btn { padding:8px 12px; border-radius:8px; font-weight:700; border:none; cursor:pointer; min-width:72px; display:inline-flex; align-items:center; justify-content:center; }
+      .quiz-btn.ghost { background: var(--surface, #fff); border:1px solid rgba(0,0,0,0.06); color: inherit; }
+      .quiz-btn.primary { background: linear-gradient(90deg, var(--accent-from,#4f46e5), var(--accent-to,#a78bfa)); color: white; box-shadow: 0 6px 20px rgba(79,70,229,0.18); }
+
+      /* results area scrollbar + styles */
+      .quiz-results{ max-height:260px; overflow-y:auto; padding-right:8px; }
+      .quiz-results::-webkit-scrollbar{ width:12px; height:12px; }
+      .quiz-results::-webkit-scrollbar-track{ background: transparent; }
+      .quiz-results::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, var(--accent-from,#ffd966), var(--accent-to,#ff8a4b)); border-radius:10px; border:3px solid transparent; background-clip: padding-box; }
+      .quiz-results { scrollbar-width: thin; scrollbar-color: var(--accent-from,#ffd966) transparent; }
+
+      /* small layout tweaks */
+      .quiz-choice .bullet { min-width:28px; height:28px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; border:1px solid rgba(0,0,0,0.06); background: var(--choice-bg,#fff); margin-right:10px; }
+
+      /* dark adjustments */
+      @media (prefers-color-scheme: dark) {
+        .quiz-modal-card { background: linear-gradient(180deg,#071428,#0b2740); color:#f8fafc; border:1px solid rgba(255,255,255,0.04); }
+        .quiz-modal-header { border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .quiz-choice { border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.02); color: var(--text-on-dark,#f8fafc); }
+        .quiz-choice .bullet { border-color: rgba(255,255,255,0.04); background: rgba(255,255,255,0.01); }
+        .quiz-btn.ghost { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color: var(--text-on-dark,#f8fafc); }
+        .quiz-btn.primary { box-shadow: 0 8px 30px rgba(79,70,229,0.12); }
+        .quiz-results::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent-from,#ffd966), var(--accent-to,#ff8a4b)); }
+      }
+    `.trim();
+
+    const node = document.createElement("style");
+    node.id = id;
+    node.appendChild(document.createTextNode(css));
+    document.head.appendChild(node);
+  }, []);
+
   if (!visible) return null;
 
-  const q = questions[index];
+  const q = QUIZ[index];
 
   const select = (choiceIdx) => {
     if (!q) return;
@@ -473,19 +545,15 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
   const next = () => {
     if (!q) return;
     if (!canGoNext) return;
-    if (index < questions.length - 1) {
-      setIndex((s) => s + 1);
-    } else {
-      setShowResult(true);
-    }
+    if (index < QUIZ.length - 1) setIndex((s) => s + 1);
+    else setShowResult(true);
   };
-
   const prev = () => {
     if (index > 0) setIndex((s) => s - 1);
   };
 
   const score = Object.keys(answers).reduce((acc, k) => {
-    const qObj = questions.find((x) => String(x.id) === String(k));
+    const qObj = QUIZ.find((x) => String(x.id) === String(k));
     if (!qObj) return acc;
     return acc + (answers[k] === qObj.answerIndex ? 1 : 0);
   }, 0);
@@ -497,71 +565,56 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
     setShowResult(false);
   };
 
-  const baseChoiceStyle = {
-    textAlign: "left",
-    padding: "10px 12px",
-    borderRadius: 8,
-    border: "1px solid #e5e7eb",
-    background: "#fff",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  };
+  const renderChoice = (qq, i) => {
+    const isRevealed = Boolean(revealed[qq.id]);
+    const selectedIdx = answers[qq.id];
+    const isSelected = selectedIdx === i;
+    const isCorrect = qq.answerIndex === i;
 
-  const correctStyle = {
-    background: "#ecfdf5",
-    border: "2px solid #10b981",
-    color: "#065f46",
-  };
+    let className = "quiz-choice";
+    if (isRevealed) {
+      if (isCorrect) className += " correct";
+      else if (isSelected && !isCorrect) className += " wrong";
+      else className += " dim";
+    }
 
-  const wrongStyle = {
-    background: "#fff1f2",
-    border: "2px solid #ef4444",
-    color: "#7f1d1d",
+    return (
+      <button
+        key={i}
+        className={className}
+        onClick={() => select(i)}
+        disabled={Boolean(revealed[qq.id])}
+        aria-pressed={isSelected}
+        type="button"
+      >
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div
+            className="bullet"
+            style={{
+              background: isSelected ? "rgba(238,242,255,0.9)" : undefined,
+            }}
+          >
+            {String.fromCharCode(65 + i)}
+          </div>
+          <div style={{ maxWidth: "calc(100% - 40px)" }}>{qq.choices[i]}</div>
+        </div>
+        <div style={{ marginLeft: 8, width: 22, textAlign: "center" }}>
+          {isRevealed && isCorrect && "✅"}
+          {isRevealed && isSelected && !isCorrect && "❌"}
+        </div>
+      </button>
+    );
   };
 
   return (
-    <div
-      style={{ position: "fixed", inset: 0, zIndex: 80 }}
-      aria-modal="true"
-      role="dialog"
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(2,6,23,0.6)",
-        }}
-        onClick={onClose}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 800,
-          maxWidth: "94vw",
-          background: "white",
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 12px 40px rgba(2,6,23,0.4)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "12px 16px",
-            borderBottom: "1px solid #eee",
-          }}
-        >
+    <div className="quiz-modal-backdrop" role="dialog" aria-modal="true">
+      <div className="qm-overlay" onClick={onClose} />
+      <div className="quiz-modal-card" role="document" aria-label="Quiz nhanh">
+        <div className="quiz-modal-header">
           <div>
             <div style={{ fontWeight: 700 }}>Quiz nhanh</div>
-            <div style={{ fontSize: 12, color: "#6b7280" }}>
-              {showResult ? `Kết quả` : `${index + 1} / ${questions.length}`}
+            <div className="meta">
+              {showResult ? `Kết quả` : `${index + 1} / ${QUIZ.length}`}
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -573,6 +626,7 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
                 border: "none",
                 padding: 6,
                 cursor: "pointer",
+                color: "inherit",
               }}
             >
               <X size={18} />
@@ -580,70 +634,12 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
           </div>
         </div>
 
-        <div style={{ padding: 16 }}>
+        <div className="quiz-modal-body">
           {!showResult ? (
             <>
-              <div style={{ marginBottom: 12, fontWeight: 600 }}>{q.q}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {q.choices.map((c, i) => {
-                  const isRevealed = Boolean(revealed[q.id]);
-                  const selectedIdx = answers[q.id];
-                  const isSelected = selectedIdx === i;
-                  const isCorrect = q.answerIndex === i;
-
-                  let style = { ...baseChoiceStyle };
-                  if (isRevealed) {
-                    if (isCorrect) style = { ...style, ...correctStyle };
-                    else if (isSelected && !isCorrect)
-                      style = { ...style, ...wrongStyle };
-                    else style = { ...style, opacity: 0.95 };
-                  }
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => select(i)}
-                      disabled={Boolean(revealed[q.id])}
-                      style={style}
-                      aria-pressed={isSelected}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          alignItems: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            minWidth: 28,
-                            height: 28,
-                            borderRadius: 999,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: 700,
-                            border: "1px solid rgba(0,0,0,0.06)",
-                            background: isSelected ? "#eef2ff" : "#fff",
-                          }}
-                        >
-                          {String.fromCharCode(65 + i)}
-                        </div>
-                        <div style={{ maxWidth: "calc(100% - 40px)" }}>{c}</div>
-                      </div>
-                      <div
-                        style={{
-                          marginLeft: 8,
-                          width: 22,
-                          textAlign: "center",
-                        }}
-                      >
-                        {isRevealed && isCorrect && "✅"}
-                        {isRevealed && isSelected && !isCorrect && "❌"}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="quiz-question">{q?.q}</div>
+              <div className="quiz-choices">
+                {(q?.choices || []).map((_, i) => renderChoice(q, i))}
               </div>
 
               <div
@@ -657,43 +653,26 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
                 <button
                   onClick={prev}
                   disabled={index === 0}
+                  className="quiz-btn ghost"
                   style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: "1px solid #e5e7eb",
-                    background: "#fff",
-                    cursor: index === 0 ? "not-allowed" : "pointer",
                     opacity: index === 0 ? 0.6 : 1,
+                    cursor: index === 0 ? "not-allowed" : "pointer",
                   }}
                 >
                   ← Trước
                 </button>
 
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={restart}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      border: "1px solid #e5e7eb",
-                      background: "#fff",
-                    }}
-                  >
+                  <button onClick={restart} className="quiz-btn ghost">
                     Làm lại
                   </button>
-
                   <button
                     onClick={next}
                     disabled={!canGoNext}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      background: canGoNext ? "#4f46e5" : "#a78bfa88",
-                      color: "white",
-                      cursor: canGoNext ? "pointer" : "not-allowed",
-                    }}
+                    className="quiz-btn primary"
+                    style={{ opacity: canGoNext ? 1 : 0.7 }}
                   >
-                    {index < questions.length - 1 ? "Tiếp →" : "Hoàn tất"}
+                    {index < QUIZ.length - 1 ? "Tiếp →" : "Hoàn tất"}
                   </button>
                 </div>
               </div>
@@ -703,14 +682,12 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
               <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>
                 Kết quả
               </div>
-              <div style={{ color: "#374151", marginBottom: 12 }}>
-                Bạn đúng <strong>{score}</strong> / {questions.length}
+              <div style={{ color: "var(--muted,#374151)", marginBottom: 12 }}>
+                Bạn đúng <strong>{score}</strong> / {QUIZ.length}
               </div>
 
-              <div
-                style={{ maxHeight: 260, overflowY: "auto", paddingRight: 8 }}
-              >
-                {questions.map((qq, qi) => {
+              <div className="quiz-results">
+                {QUIZ.map((qq, qi) => {
                   const sel = answers[qq.id];
                   const correct = qq.answerIndex;
                   return (
@@ -729,28 +706,31 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
                         {qq.choices.map((c, ii) => {
                           const chosen = sel === ii;
                           const corr = correct === ii;
-                          const s = {
-                            padding: "6px 8px",
-                            borderRadius: 8,
-                            border: "1px solid #e5e7eb",
-                            background: corr
-                              ? "#ecfdf5"
-                              : chosen
-                              ? "#fff1f2"
-                              : "#fff",
-                            color: corr
-                              ? "#065f46"
-                              : chosen
-                              ? "#7f1d1d"
-                              : "#111827",
-                          };
+                          const bg = corr
+                            ? "linear-gradient(180deg,#ecfdf5,#dcfce7)"
+                            : chosen
+                            ? "linear-gradient(180deg,#fff1f2,#fff1f2)"
+                            : "transparent";
+                          const color = corr
+                            ? "#065f46"
+                            : chosen
+                            ? "#7f1d1d"
+                            : undefined;
                           return (
-                            <div key={ii} style={s}>
+                            <div
+                              key={ii}
+                              style={{
+                                padding: "6px 8px",
+                                borderRadius: 8,
+                                border: "1px solid rgba(0,0,0,0.06)",
+                                background: bg,
+                                color,
+                              }}
+                            >
                               <strong style={{ marginRight: 6 }}>
                                 {String.fromCharCode(65 + ii)}.
                               </strong>
-                              {c}
-                              {corr && " ✅"}
+                              {c} {corr && " ✅"}{" "}
                               {chosen && !corr && " (Bạn chọn) ❌"}
                             </div>
                           );
@@ -762,26 +742,10 @@ export default function QuizModal({ visible, onClose, questions = QUESTIONS }) {
               </div>
 
               <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                <button
-                  onClick={restart}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: "1px solid #e5e7eb",
-                    background: "#fff",
-                  }}
-                >
+                <button onClick={restart} className="quiz-btn ghost">
                   Làm lại
                 </button>
-                <button
-                  onClick={onClose}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background: "#4f46e5",
-                    color: "white",
-                  }}
-                >
+                <button onClick={onClose} className="quiz-btn primary">
                   Đóng
                 </button>
               </div>

@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send } from "lucide-react";
+// IMPORT: adjust path if your component lives in a different folder
+import { stages } from "../data/hanoiStages";
+
+/**
+ * FloatingChatButton + local Hanoistage search integration
+ *
+ * - When user gửi câu hỏi, component sẽ tìm trong `stages` và trả về
+ *   các event / stage khớp (title, description, narrationParts).
+ * - Nếu không tìm thấy, fallback vẫn trả demo reply.
+ * - Keep UX: typing indicator, unread count, responsive.
+ */
 
 const FloatingChatButton = ({ startOpen = false }) => {
   const [isOpen, setIsOpen] = useState(startOpen);
@@ -82,7 +93,83 @@ const FloatingChatButton = ({ startOpen = false }) => {
     </div>
   );
 
-  // simple local echo send (no external API call here)
+  // simple local search over stages/events
+  const searchHanoi = (query, limit = 4) => {
+    if (!query || !query.trim()) return [];
+    const q = query.toLowerCase().trim();
+
+    const results = [];
+
+    // search events inside stages
+    for (const stage of stages) {
+      // check stage-level
+      const stageText =
+        `${stage.title} ${stage.summary} ${stage.range}`.toLowerCase();
+      if (stageText.includes(q)) {
+        results.push({
+          type: "stage",
+          stageId: stage.id,
+          title: stage.title,
+          snippet: stage.summary,
+        });
+      }
+
+      if (!Array.isArray(stage.events)) continue;
+      for (const ev of stage.events) {
+        const hay = `${ev.title} ${ev.description} ${ev.detail} ${ev.year} ${
+          ev.narrationParts?.join(" ") || ""
+        }`.toLowerCase();
+        if (hay.includes(q)) {
+          results.push({
+            type: "event",
+            stageTitle: stage.title,
+            id: ev.id,
+            year: ev.year,
+            title: ev.title,
+            snippet:
+              (ev.description && ev.description.split(".")[0]) ||
+              ev.narrationParts?.[0] ||
+              "",
+          });
+        }
+      }
+      if (results.length >= limit) break;
+    }
+    // If nothing matched, try fuzzy by checking words token-wise
+    if (results.length === 0) {
+      const tokens = q.split(/\s+/).filter(Boolean);
+      if (tokens.length) {
+        for (const stage of stages) {
+          for (const ev of stage.events || []) {
+            const hay = `${ev.title} ${ev.description} ${ev.detail} ${
+              ev.year
+            } ${ev.narrationParts?.join(" ") || ""}`.toLowerCase();
+            let score = 0;
+            for (const t of tokens) if (hay.includes(t)) score++;
+            if (score > 0) {
+              results.push({
+                type: "event",
+                stageTitle: stage.title,
+                id: ev.id,
+                year: ev.year,
+                title: ev.title,
+                snippet:
+                  (ev.description && ev.description.split(".")[0]) ||
+                  ev.narrationParts?.[0] ||
+                  "",
+              });
+            }
+            if (results.length >= limit) break;
+          }
+          if (results.length >= limit) break;
+        }
+      }
+    }
+
+    return results.slice(0, limit);
+  };
+
+  // send message + search
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     const text = newMessage.trim();
@@ -99,27 +186,58 @@ const FloatingChatButton = ({ startOpen = false }) => {
     setNewMessage("");
     setIsSending(true);
 
-    // fake typing
+    // typing placeholder
     const typingId = `typing-${Date.now()}`;
     setMessages((prev) => [
       ...prev,
       { id: typingId, text: "", isUser: false, typing: true },
     ]);
 
-    // simulate AI response (replace this with real API call)
+    // perform local search
+    const results = searchHanoi(text, 5);
+
+    // prepare reply
+    let replyText = "";
+    if (/^(danh sách|list|show stages|show stage)$/i.test(text)) {
+      // show stages list
+      replyText =
+        "Các giai đoạn trong dữ liệu:\n" +
+        stages.map((s) => `• ${s.range} — ${s.title}`).join("\n");
+    } else if (results.length > 0) {
+      // format results
+      replyText = results
+        .map((r) => {
+          if (r.type === "stage") {
+            return `Giai đoạn ${r.title}: ${r.snippet}`;
+          }
+          return `${r.year} — ${r.title}${
+            r.stageTitle ? ` (${r.stageTitle})` : ""
+          }${r.snippet ? `\n↳ ${r.snippet}` : ""}`;
+        })
+        .join("\n\n");
+      replyText =
+        "Mình tìm thấy 1 số tài liệu phù hợp trong data:\n\n" + replyText;
+    } else {
+      // fallback: demo reply
+      replyText = `Bạn hỏi: "${text}". Mình search trong data nhưng không thấy kết quả rõ ràng. Bạn thử hỏi cụ thể hơn (ví dụ: "30-4-1975" hoặc "Đại hội V 1982") hoặc viết keyword ngắn.`;
+    }
+
+    // simulate typing delay based on reply length
+    const simulatedDelay = 500 + Math.min(replyText.length * 8, 1600);
+
     setTimeout(() => {
       setMessages((prev) =>
         prev
           .filter((m) => m.id !== typingId)
           .concat({
             id: Date.now() + 1,
-            text: `Bạn hỏi: "${text}". Tớ đang học — sẽ trả lời cụ thể sau (demo).`,
+            text: replyText,
             isUser: false,
             time: new Date().toISOString(),
           })
       );
       setIsSending(false);
-    }, 900 + Math.min(text.length * 10, 1200));
+    }, simulatedDelay);
   };
 
   const handleKeyDown = (e) => {
@@ -174,7 +292,7 @@ const FloatingChatButton = ({ startOpen = false }) => {
               <div>
                 <div style={inlineStyles.headerTitle}>Trợ lý AI</div>
                 <div style={inlineStyles.headerSubtitle}>
-                  VNR202 - Chatbot demo
+                  Connected: Hanoistage (local)
                 </div>
               </div>
             </div>
@@ -255,7 +373,7 @@ const FloatingChatButton = ({ startOpen = false }) => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Gõ câu hỏi..."
+              placeholder="Gõ câu hỏi... (ví dụ: '30-4-1975', 'Đại hội V', 'Giá - Lương - Tiền')"
               style={inlineStyles.textarea}
             />
             <button
@@ -303,7 +421,7 @@ const FloatingChatButton = ({ startOpen = false }) => {
   );
 };
 
-/* Inline style objects */
+/* Inline style objects (same as before) */
 const inlineStyles = {
   container: {
     position: "fixed",
