@@ -30,6 +30,22 @@
   /* Dragon slot vars: đảm bảo modal nhường chỗ cho Dragon */
   --dragon-slot-w: 260px; /* chiều ngang orb + bubble dự kiến */
   --dragon-gap: 24px; /* khoảng cách giữa modal và dragon */
+
+  /* modal/list safety vars (default for light mode) */
+  --modal-text: #0f172a; /* default modal text (will be overridden in dark media query if needed) */
+  --modal-bg: var(--surface, #ffffff);
+  --list-text: #0b1220; /* text color for left list cards */
+  --list-card-bg: #ffffff;
+}
+
+/* dark-mode modal-friendly overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --modal-text: #e6eef8;
+    --modal-bg: #071221;
+    --list-text: #0b1220; /* keep list cards dark-text on white background for contrast */
+    --list-card-bg: #ffffff;
+  }
 }
 
 /* backdrop */
@@ -203,6 +219,8 @@
   padding-right: 8px;
   box-sizing: border-box;
   scroll-behavior: smooth;
+  /* ensure list uses card style background */
+  background: transparent;
 }
 
 /* RIGHT: detail panel */
@@ -288,7 +306,7 @@
   padding: 12px;
   margin: 8px 4px;
   border-radius: var(--card-radius);
-  background: #fff;
+  background: var(--list-card-bg, #fff);
   border: 1px solid var(--line);
   cursor: pointer;
   scroll-margin-top: 96px;
@@ -377,7 +395,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 900;
-  color: var(--ink);
+  color: var(--list-text);
 }
 .desc {
   margin: 0;
@@ -533,4 +551,119 @@
   width: 100%;
   height: 100%;
   border: none;
+}
+
+/* ----------------------- Scoped color safety overrides -----------------------
+   Avoid global ".sheet * { color: ... }" patterns. Instead:
+   - force list (left column) to use dark text & white cards for contrast
+   - force detailPanel (right) to use modal-friendly text (var(--modal-text))
+   - neutralize problematic properties inside these scopes only
+-------------------------------------------------------------------------------*/
+
+/* Ensure left list is always readable (dark text on card) */
+.list,
+.list * {
+  color: var(--list-text) !important;
+  background: transparent !important;
+  -webkit-text-fill-color: unset !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Make item title/desc/meta explicit */
+.list .itemTitle {
+  color: var(--list-text) !important;
+}
+.list .meta,
+.list .place,
+.list .desc {
+  color: var(--muted) !important;
+}
+.list .year,
+.list .yearActive {
+  color: var(--list-text) !important;
+}
+
+/* Keep list card visuals intact */
+.list .item {
+  background: var(--list-card-bg) !important;
+  border: 1px solid var(--line) !important;
+}
+.list .thumb,
+.list .thumbFallback {
+  background: #f1f5f9 !important;
+  color: var(--muted) !important;
+}
+
+/* Ensure buttons/links inside list are readable */
+.list a,
+.list button {
+  color: var(--list-text) !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+/* Detail panel should use modal text color (light on dark or dark on light via vars) */
+.detailPanel,
+.detailPanel * {
+  color: var(--modal-text) !important;
+  -webkit-text-fill-color: unset !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* explicit text elements inside detail panel */
+.detailPanel h1,
+.detailPanel h2,
+.detailPanel h3,
+.detailPanel h4,
+.detailPanel h5,
+.detailPanel p,
+.detailPanel li,
+.detailPanel span,
+.detailPanel a {
+  color: var(--modal-text) !important;
+  -webkit-text-fill-color: unset !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Buttons / tabs contrast inside detail */
+.detailPanel .tabBtn,
+.detailPanel .tabActive,
+.detailPanel .primaryBtn,
+.detailPanel .footerNav,
+.detailPanel .closeBtn,
+.detailPanel a,
+.detailPanel button {
+  color: var(--modal-text) !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+/* preview card & overlay colors */
+.previewOverlay {
+  background: rgba(2, 6, 23, 0.7) !important;
+}
+.previewCard {
+  background: var(--modal-bg) !important;
+  color: var(--modal-text) !important;
+}
+
+/* scroll thumb contrast tweaks */
+.list::-webkit-scrollbar-thumb,
+.detailPanel::-webkit-scrollbar-thumb {
+  background: rgba(2, 6, 23, 0.06) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .list::-webkit-scrollbar-thumb,
+  .detailPanel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+}
+
+/* final fallback selector: common text elements inside modal root */
+:where(.sheet) :where(p, span, li, h1, h2, h3, h4, a, button) {
+  /* only set color if not already set by the more specific rules above */
+  color: var(--modal-text) !important;
+  -webkit-text-fill-color: unset !important;
 }

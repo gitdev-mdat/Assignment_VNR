@@ -1,6 +1,7 @@
+// src/components/EventModal.jsx  (replace your existing file)
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Play, Image, Video } from "lucide-react";
+import { X, Play, Image as ImageIcon } from "lucide-react";
 import styles from "../styles/EventModal.module.css";
 
 /**
@@ -33,7 +34,8 @@ export default function EventModal({
   const sheetRef = useRef(null);
 
   const [idx, setIdx] = useState(startIndex || 0);
-  const [panelTab, setPanelTab] = useState("evidence");
+  // DEFAULT to 'detail' instead of 'evidence'
+  const [panelTab, setPanelTab] = useState("detail");
   const [previewMedia, setPreviewMedia] = useState(null);
   const suppressObserverRef = useRef(false);
   const suppressTimeoutRef = useRef(null);
@@ -51,7 +53,8 @@ export default function EventModal({
       listRef.current.scrollTo({ top, behavior: "smooth" });
     }
     onIndexChange?.(idx);
-    setPanelTab("evidence");
+    // open detail by default when index changes
+    setPanelTab("detail");
   }, [idx, show, onIndexChange]);
 
   useEffect(() => {
@@ -177,7 +180,6 @@ export default function EventModal({
               <Play size={14} /> Dẫn mốc
             </button>
 
-            {/* <-- Back stage button (new) */}
             <button
               type="button"
               className={styles.primaryBtn}
@@ -249,7 +251,7 @@ export default function EventModal({
                     notifyUserInteraction();
                     setIdx(it.i);
                     onIndexChange?.(it.i);
-                    setPanelTab("evidence");
+                    setPanelTab("detail"); // keep behaviour: list click => detail
                   }}
                 >
                   <div className={styles.thumb}>
@@ -262,7 +264,7 @@ export default function EventModal({
                       />
                     ) : (
                       <div className={styles.thumbFallback} aria-hidden>
-                        <Image size={20} />
+                        <ImageIcon size={20} />
                       </div>
                     )}
                   </div>
@@ -355,24 +357,6 @@ export default function EventModal({
                   >
                     Chi tiết
                   </button>
-                  <button
-                    type="button"
-                    className={`${styles.tabBtn} ${
-                      panelTab === "desc" ? styles.tabActive : ""
-                    }`}
-                    onClick={() => setPanelTab("desc")}
-                  >
-                    Mô tả ngắn
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.tabBtn} ${
-                      panelTab === "source" ? styles.tabActive : ""
-                    }`}
-                    onClick={() => setPanelTab("source")}
-                  >
-                    Nguồn
-                  </button>
                 </div>
 
                 {/* === Tab content === */}
@@ -380,7 +364,7 @@ export default function EventModal({
                   <div>
                     <h4>Bằng chứng</h4>
 
-                    {/* Video */}
+                    {/* If there are videos -> show them */}
                     {active.videos?.length ? (
                       <div style={{ marginTop: 20 }}>
                         {active.videos.map((v, i) => {
@@ -416,9 +400,63 @@ export default function EventModal({
                           );
                         })}
                       </div>
+                    ) : active.images?.length ? (
+                      // No videos -> show images as replacement (click to preview)
+                      <div
+                        style={{
+                          marginTop: 12,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(120px, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        {active.images.map((src, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() =>
+                              setPreviewMedia({ type: "image", src })
+                            }
+                            className={styles.imageThumbBtn}
+                            style={{
+                              border: "none",
+                              padding: 0,
+                              background: "transparent",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: "100%",
+                                paddingTop: "66%",
+                                position: "relative",
+                                overflow: "hidden",
+                                borderRadius: 8,
+                                background: "#f3f4f6",
+                              }}
+                            >
+                              <img
+                                src={src}
+                                alt={`evidence-${i}`}
+                                draggable={false}
+                                style={{
+                                  position: "absolute",
+                                  top: 0,
+                                  left: 0,
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     ) : (
                       <div style={{ color: "#64748b", marginTop: 8 }}>
-                        Không có video.
+                        Không có bằng chứng đa phương tiện.
                       </div>
                     )}
                   </div>
@@ -506,7 +544,6 @@ export default function EventModal({
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
-              {/* <-- Back stage in footer too */}
               <button
                 type="button"
                 className={styles.footerNav}

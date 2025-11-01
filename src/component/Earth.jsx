@@ -350,7 +350,7 @@ const Earth = () => {
   }, [currentStageIdx, stagesWithEvents, flyOnce]);
 
   // quiz url (env fallback)
-  const quizUrl = "https://example.com/quiz";
+  const quizUrl = "https://quiz.com/";
 
   return (
     <div className={styles.earthContainer}>

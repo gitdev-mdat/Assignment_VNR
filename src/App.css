@@ -1,3 +1,29 @@
+/* === App.css === */
+
+/* Mặc định: Light mode */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1e293b;
+  --link-color: #2563eb;
+}
+
+/* Dark mode tự động */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f172a;
+    --text-color: #f1f5f9;
+    --link-color: #60a5fa;
+  }
+}
+
+/* Toàn cục */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Giữ layout cũ */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,38 +31,22 @@
   text-align: center;
 }
 
+a {
+  color: var(--link-color);
+}
+
+/* Logo */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
+  filter: drop-shadow(0 0 2em var(--link-color));
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--text-color);
 }

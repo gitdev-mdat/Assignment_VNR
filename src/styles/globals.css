@@ -1,0 +1,52 @@
+/* src/styles/globals.css - safe theme vars + utility to force readable text */
+
+/* merge these into root (doesn't overwrite your font settings) */
+:root {
+  --app-bg: #ffffff;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --panel-bg: #ffffff;
+  --modal-text: #0f172a;
+  --modal-bg: #ffffff;
+  --accent: #646cff;
+}
+
+/* dark-mode variants */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: #071221;
+    --text-primary: #e6eef8;
+    --text-muted: #9ca3af;
+    --panel-bg: #0b1720;
+    --modal-text: #e6eef8;
+    --modal-bg: #071221;
+    --accent: #ffd166;
+  }
+}
+
+/* base safety (do not touch fonts) */
+html,
+body {
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+/* Utility: scope this to containers that need "force visible" */
+.force-text-visible,
+.force-text-visible * {
+  color: var(--modal-text) !important;
+  -webkit-text-fill-color: unset !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* small scrollbar contrast fallback inside modal/list */
+.force-text-visible ::-webkit-scrollbar-thumb {
+  background: rgba(2, 6, 23, 0.06) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .force-text-visible ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+}
