@@ -97,6 +97,44 @@
   box-shadow: 0 8px 26px rgba(2, 6, 23, 0.45);
 }
 
+/* Timeline button cho marker Hà Nội */
+.markerHanoi {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineButton {
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: linear-gradient(90deg, #ffd966, #ff8a4b);
+  color: #07102a;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 160ms ease, transform 160ms ease, box-shadow 0.2s ease;
+  pointer-events: auto;
+  box-shadow: 0 6px 20px rgba(255, 138, 75, 0.25);
+}
+
+.markerWrapper:hover .timelineButton {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.timelineButton:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 30px rgba(255, 138, 75, 0.35);
+}
+
+.timelineButton:active {
+  transform: translateY(0) scale(1);
+}
+
 .marker.show {
   transform: scale(1);
   opacity: 1;

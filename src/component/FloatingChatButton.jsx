@@ -12,7 +12,7 @@ import { stages } from "../data/hanoiStages";
  * - Keep UX: typing indicator, unread count, responsive.
  */
 
-const FloatingChatButton = ({ startOpen = false }) => {
+const FloatingChatButton = ({ startOpen = false, customPosition = null }) => {
   const [isOpen, setIsOpen] = useState(startOpen);
   const [messages, setMessages] = useState([
     {
@@ -256,10 +256,21 @@ const FloatingChatButton = ({ startOpen = false }) => {
     }
   };
 
+  const containerStyle = isMobile 
+    ? inlineStyles.containerMobile 
+    : customPosition 
+      ? { 
+          ...inlineStyles.container, 
+          ...customPosition, 
+          transform: "none",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          width: "auto",
+        }
+      : inlineStyles.container;
+
   return (
-    <div
-      style={isMobile ? inlineStyles.containerMobile : inlineStyles.container}
-    >
+    <div style={containerStyle}>
       {/* inject keyframes & small helper css via style tag so animations work inline */}
       <style>
         {`
@@ -404,13 +415,19 @@ const FloatingChatButton = ({ startOpen = false }) => {
         }}
       >
         {isOpen ? (
-          <X size={20} color="#fff" />
+          <>
+            <X size={18} color="#fff" style={{ marginRight: 6 }} />
+            Đóng
+          </>
         ) : (
-          <MessageSquare size={20} color="#fff" />
+          <>
+            <MessageSquare size={18} color="#fff" style={{ marginRight: 6 }} />
+            AI Chat
+          </>
         )}
 
         {/* AI badge */}
-        {!isOpen && <span style={inlineStyles.aiBadge}>AI</span>}
+        {!isOpen && !isMobile && <span style={inlineStyles.aiBadge}>AI</span>}
 
         {/* unread pulse */}
         {!isOpen && unreadCount > 0 && (
@@ -453,6 +470,7 @@ const inlineStyles = {
     minWidth: 500,
     maxHeight: "70vh",
     marginLeft: 64,
+    marginTop: 0,
     display: "flex",
     flexDirection: "column",
     borderRadius: 16,
@@ -590,15 +608,20 @@ const inlineStyles = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    boxShadow: "0 12px 30px rgba(15,23,42,0.18)",
+    padding: 10,
+    width: "auto",
+    minWidth: 52,
+    height: "auto",
+    minHeight: 52,
+    borderRadius: 10,
+    boxShadow: "0 8px 20px rgba(79, 70, 229, 0.25)",
     cursor: "pointer",
     transition: "transform 160ms ease, background 160ms ease",
     border: "none",
     color: "#fff",
     position: "relative",
+    fontWeight: 700,
+    fontSize: 14,
   },
   toggleMobile: {
     width: 48,

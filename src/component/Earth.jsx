@@ -86,65 +86,6 @@ const Earth = () => {
 
   const currentStage = stagesWithEvents[currentStageIdx] || { events: [] };
 
-  // --- Create Markers ---
-  const createMarkers = useCallback(() => {
-    const globe = globeInstanceRef.current;
-    if (!globe) return { hasAny: false };
-
-    globe.htmlElementsData([]); // clear previous
-
-    const markers = flattenedEvents.map((ev, i) => ({
-      id: ev.id ?? `ev-${i}`,
-      lat: fin(ev.lat) ?? HANOI.lat,
-      lng: fin(ev.lng) ?? HANOI.lng,
-      name: ev.title ?? "Sự kiện",
-      stageIndex: ev.stageIndex,
-      eventIndex: ev.eventIndex,
-      kind: "event",
-    }));
-
-    const hasNearHanoi = markers.some(
-      (m) =>
-        Math.abs(m.lat - HANOI.lat) < 0.2 && Math.abs(m.lng - HANOI.lng) < 0.2
-    );
-    if (!hasNearHanoi) {
-      markers.unshift({
-        id: "hanoi-marker",
-        lat: HANOI.lat,
-        lng: HANOI.lng,
-        name: "Hà Nội",
-        stageIndex: 0,
-        eventIndex: 0,
-        kind: "hanoi",
-      });
-    }
-
-    globe.htmlElementsData(markers).htmlElement((d) => {
-      const wrapper = document.createElement("div");
-      wrapper.classList.add(styles.markerWrapper);
-      if (d.kind === "hanoi") wrapper.classList.add(styles.markerHanoi);
-
-      const marker = document.createElement("div");
-      marker.classList.add(styles.marker);
-      marker.innerHTML = `<span class="${styles.pulse}"></span><span class="${styles.dot}"></span>`;
-
-      const label = document.createElement("div");
-      label.classList.add(styles.markerLabel);
-      label.textContent = d.name;
-
-      wrapper.append(marker, label);
-
-      wrapper.onclick = (e) => {
-        e.stopPropagation();
-        startGuidedStage(d.stageIndex ?? 0, d.eventIndex ?? 0);
-      };
-
-      return wrapper;
-    });
-
-    return { hasAny: markers.length > 0 };
-  }, [flattenedEvents]);
-
   // --- Fly camera helper ---
   const flyOnce = useCallback((lat, lng, altitude = 0.18, duration = 3000) => {
     const globe = globeInstanceRef.current;
@@ -221,6 +162,48 @@ const Earth = () => {
     },
     [stagesWithEvents, flyOnce, showBombEffect]
   );
+
+  // --- Create Markers ---
+  const createMarkers = useCallback(() => {
+    const globe = globeInstanceRef.current;
+    if (!globe) return { hasAny: false };
+
+    globe.htmlElementsData([]); // clear previous
+
+    const markers = flattenedEvents.map((ev, i) => ({
+      id: ev.id ?? `ev-${i}`,
+      lat: fin(ev.lat) ?? HANOI.lat,
+      lng: fin(ev.lng) ?? HANOI.lng,
+      name: ev.title ?? "Sự kiện",
+      stageIndex: ev.stageIndex,
+      eventIndex: ev.eventIndex,
+      kind: "event",
+    }));
+
+    globe.htmlElementsData(markers).htmlElement((d) => {
+      const wrapper = document.createElement("div");
+      wrapper.classList.add(styles.markerWrapper);
+
+      const marker = document.createElement("div");
+      marker.classList.add(styles.marker);
+      marker.innerHTML = `<span class="${styles.pulse}"></span><span class="${styles.dot}"></span>`;
+
+      const label = document.createElement("div");
+      label.classList.add(styles.markerLabel);
+      label.textContent = d.name;
+
+      wrapper.append(marker, label);
+
+      wrapper.onclick = (e) => {
+        e.stopPropagation();
+        startGuidedStage(d.stageIndex ?? 0, d.eventIndex ?? 0);
+      };
+
+      return wrapper;
+    });
+
+    return { hasAny: markers.length > 0 };
+  }, [flattenedEvents, startGuidedStage]);
 
   // --- Dragon finished ---
   const handleDragonAllFinished = useCallback(() => {
@@ -350,7 +333,7 @@ const Earth = () => {
   }, [currentStageIdx, stagesWithEvents, flyOnce]);
 
   // quiz url (env fallback)
-  const quizUrl = "https://quiz.com/";
+  const quizUrl = "https://quiz.com/4d426a94-bd67-4909-9b59-f96464a123fd";
 
   return (
     <div className={styles.earthContainer}>
@@ -400,20 +383,42 @@ const Earth = () => {
         )}
       </Suspense>
 
-      {/* Floating chat (left middle) */}
-      <Suspense fallback={null}>
-        <FloatingChatButton startOpen={false} />
-      </Suspense>
-
-      {/* Small Quiz button stacked above chat (left) */}
+      {/* Left side buttons: Timeline, Quiz, AI Chat */}
       <div
         style={{
           position: "fixed",
           left: 16,
-          top: "calc(50% - 84px)",
+          top: "calc(50% - 120px)",
           zIndex: 61,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
         }}
       >
+        {/* Timeline button */}
+        <button
+          onClick={() => {
+            setCurrentStageIdx(0);
+            setModalIndex(0);
+            setShowModal(true);
+          }}
+          title="Mở Timeline"
+          style={{
+            padding: 10,
+            borderRadius: 10,
+            background: "linear-gradient(90deg, #ffd966, #ff8a4b)",
+            color: "#07102a",
+            boxShadow: "0 8px 20px rgba(255, 138, 75, 0.25)",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 800,
+            fontSize: 14,
+          }}
+        >
+          📜 Timeline
+        </button>
+
+        {/* Quiz button */}
         <button
           onClick={() => setShowQuiz(true)}
           title="Mở quiz"
@@ -431,6 +436,18 @@ const Earth = () => {
           Quiz
         </button>
       </div>
+
+      {/* Floating chat - repositioned to align with other buttons */}
+      <Suspense fallback={null}>
+        <FloatingChatButton
+          startOpen={false}
+          customPosition={{
+            left: 16,
+            top: "calc(50% + 20px)",
+            zIndex: 61,
+          }}
+        />
+      </Suspense>
 
       {/* Quiz Modal */}
       <Suspense fallback={null}>

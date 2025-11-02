@@ -283,7 +283,7 @@ export default function EventModal({
               <Play size={14} /> Giai đoạn tiếp →
             </button>
 
-            <button
+            {/* <button
               type="button"
               onClick={onClose}
               aria-label="Đóng"
@@ -292,7 +292,7 @@ export default function EventModal({
             >
               <X size={16} />
               <span className={styles.closeText}>Đóng</span>
-            </button>
+            </button> */}
           </div>
         </header>
 
@@ -397,13 +397,13 @@ export default function EventModal({
                   }}
                 >
                   <div>
-                    <div style={{ color: "#94a3b8", fontSize: 13 }}>
+                    <div style={{ color: "var(--muted)", fontSize: 13 }}>
                       <strong>{active.year}</strong> — {active.place}
                     </div>
-                    <h2 style={{ margin: "8px 0 12px" }}>{active.title}</h2>
+                    <h2 style={{ margin: "8px 0 12px", color: "var(--text-on-dark)" }}>{active.title}</h2>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#6b7280", fontSize: 13 }}>
+                    <div style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
                       {active.pageNote}
                     </div>
                     <div style={{ marginTop: 8 }} />
@@ -534,7 +534,7 @@ export default function EventModal({
                         ))}
                       </div>
                     ) : (
-                      <div style={{ color: "#64748b", marginTop: 8 }}>
+                      <div style={{ color: "var(--muted)", marginTop: 8 }}>
                         Không có bằng chứng đa phương tiện.
                       </div>
                     )}
@@ -544,7 +544,7 @@ export default function EventModal({
                 {panelTab === "detail" && (
                   <div>
                     <h4>Chi tiết</h4>
-                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--text-on-dark)" }}>
                       {active.detail || "Không có nội dung chi tiết."}
                     </p>
                   </div>
@@ -553,7 +553,7 @@ export default function EventModal({
                 {panelTab === "desc" && (
                   <div>
                     <h4>Mô tả ngắn</h4>
-                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                    <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--text-on-dark)" }}>
                       {active.description || "Không có mô tả."}
                     </p>
                   </div>
@@ -562,7 +562,7 @@ export default function EventModal({
                 {panelTab === "source" && (
                   <div>
                     <h4>Nguồn & Ghi chú</h4>
-                    <div style={{ color: "#6b7280", whiteSpace: "pre-wrap" }}>
+                    <div style={{ color: "var(--text-tertiary)", whiteSpace: "pre-wrap" }}>
                       {active.pageNote || "Không có chú thích trang."}
                     </div>
                     {active.sourceLinks?.length > 0 && (
@@ -580,7 +580,7 @@ export default function EventModal({
                 )}
               </>
             ) : (
-              <div>Không có mốc được chọn.</div>
+              <div style={{ color: "var(--text-on-dark)" }}>Không có mốc được chọn.</div>
             )}
           </aside>
         </div>
@@ -618,7 +618,7 @@ export default function EventModal({
               </button>
             </div>
 
-            <div style={{ color: "#94a3b8" }}>
+            <div style={{ color: "var(--muted)" }}>
               {idx + 1} / {items.length}
             </div>
 
@@ -641,13 +641,13 @@ export default function EventModal({
               >
                 Giai đoạn tiếp →
               </button>
-              <button
+              {/* <button
                 type="button"
                 className={styles.footerClose}
                 onClick={onClose}
               >
                 Đóng
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
