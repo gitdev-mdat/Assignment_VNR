@@ -225,9 +225,8 @@ export default function EventModal({
         onClick={(e) => e.stopPropagation()}
         className={`${styles.sheet} ${styles.sheetRight}`}
         style={{
-          bottom: bottomOffset,
           "--sheet-w": "min(1400px, 98vw)",
-          "--sheet-h": "clamp(520px, 100vh, 1000px)",
+          "--sheet-h": "clamp(520px, 85vh, 1000px)",
           "--sheet-pad-top": "64px",
           justifyContent: "flex-end",
           zIndex: 1010,

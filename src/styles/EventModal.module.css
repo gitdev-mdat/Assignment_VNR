@@ -99,7 +99,8 @@
 .sheet {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: var(--sheet-w);
   height: min(var(--sheet-h), 85vh);
   max-height: 85vh;
@@ -591,7 +592,8 @@
     width: calc(100vw - 32px);
     height: calc(100vh - 48px);
     left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
     padding-top: var(--sheet-pad-top);
   }
   .sheetInner {
